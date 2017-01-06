@@ -35,7 +35,9 @@ func process(filename string, recv chan sdjournal.JournalEntry, rotate chan os.S
 
 func main() {
 	var filename string
+	var unit string
 	flag.StringVar(&filename, "logfile", "/var/log/fromjournal.log", "File name of logfile to write to")
+	flag.StringVar(&unit, "unit", "", "Only process messages from this systemd unit")
 	flag.Parse()
 
 	done := make(chan int, 1)
@@ -44,10 +46,14 @@ func main() {
 
 	signal.Notify(rotate, syscall.SIGHUP)
 
-	jr, err := sdjournal.NewJournalReader(sdjournal.JournalReaderConfig{
+	config := sdjournal.JournalReaderConfig{
 		Since: time.Duration(1),
 		//          NumFromTail: 0,
-	})
+	}
+	if (unit != "") {
+		config.Matches = []sdjournal.Match{{Field: "_SYSTEMD_UNIT", Value: unit}}
+	}
+	jr, err := sdjournal.NewJournalReader(config)
 	if err != nil {
 		fmt.Printf("Could not create JournalReader: %v\n", err)
 		return
