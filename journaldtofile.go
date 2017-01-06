@@ -10,7 +10,6 @@ import "time"
 import "github.com/mheese/go-systemd/sdjournal"
 
 func process(filename string, recv chan sdjournal.JournalEntry, rotate chan os.Signal) {
-	fmt.Printf("In process\n")
 	outputfile, err := os.OpenFile(filename, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
 	if err != nil {
 		panic(err)
@@ -48,10 +47,13 @@ func main() {
 
 	config := sdjournal.JournalReaderConfig{
 		Since: time.Duration(1),
-		//          NumFromTail: 0,
 	}
+	var unitlog string
 	if (unit != "") {
 		config.Matches = []sdjournal.Match{{Field: "_SYSTEMD_UNIT", Value: unit}}
+		unitlog = " for systemd unit " + unit
+	} else {
+		unitlog = ""
 	}
 	jr, err := sdjournal.NewJournalReader(config)
 	if err != nil {
@@ -60,7 +62,7 @@ func main() {
 	}
 	go process(filename, recv, rotate)
 
-	fmt.Printf("Starting followjournal\n")
+	fmt.Printf("Saving journald data%v to %v\n", unitlog, filename)
 	jr.FollowJournal(done, recv)
 	
 }
