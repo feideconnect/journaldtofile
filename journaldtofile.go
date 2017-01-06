@@ -19,7 +19,7 @@ func process(filename string, recv chan sdjournal.JournalEntry, rotate chan os.S
 	var line string
 	for {
 		select {
-		case entry := <- recv:
+		case entry := <-recv:
 			line = entry["MESSAGE"].(string) + "\n"
 			outputfile.WriteString(line)
 		case <-rotate:
@@ -49,7 +49,7 @@ func main() {
 		Since: time.Duration(1),
 	}
 	var unitlog string
-	if (unit != "") {
+	if unit != "" {
 		config.Matches = []sdjournal.Match{{Field: "_SYSTEMD_UNIT", Value: unit}}
 		unitlog = " for systemd unit " + unit
 	} else {
@@ -64,5 +64,5 @@ func main() {
 
 	fmt.Printf("Saving journald data%v to %v\n", unitlog, filename)
 	jr.FollowJournal(done, recv)
-	
+
 }
